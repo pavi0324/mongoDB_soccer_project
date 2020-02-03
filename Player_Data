@@ -1,0 +1,150 @@
+db.schedule_result.aggregate ( [ 
+{
+	$lookup:
+		{
+			from:"stadiums",
+			localField:"SID",
+			foreignField:"SID",
+			as:"Game_Stadium"
+		}
+},
+{
+$project: {
+        "_id": 0,
+		"GameID": 1,
+		"Groups": 1,
+		"MatchDate":1,
+		"SID" : 1,
+        "TeamID1" : 1,
+        "TeamID2" : 1,
+        "Team1_Score" : 1,
+        "Team2_Score" : 1,
+        "Game_Stadium.SID" :1,
+		"Game_Stadium.SName" :1,
+		"Game_Stadium.SCity" :1
+		}
+		},
+		
+		{
+		$out: "Game_Stadium_Details"
+		}
+])
+
+
+---------------------------------------------------------
+
+
+db.schedule_result.aggregate ( [ 
+{
+	$lookup:
+		{
+			from:"goals",
+			localField:"GameID",
+			foreignField:"GameID",
+			as:"Game_Goals"
+		}
+},
+{
+$project: {
+        "_id": 0,
+		"GameID": 1,
+		"Groups": 1,
+		"MatchDate":1,
+		"SID" : 1,
+        "TeamID1" : 1,
+        "TeamID2" : 1,
+        "Team1_Score" : 1,
+        "Team2_Score" : 1,
+        "Game_Goals.GameID" :1,
+		"Game_Goals.TeamID" :1,
+		"Game_Goals.PlayerID" :1,
+		"Game_Goals.Time" :1
+		}
+		},
+		{
+		$out: "Game_Goal_Details"
+		}
+		
+])
+
+
+---------------------------------------------------------
+
+
+db.rosters.aggregate ( [ 
+{
+$lookup: {
+             from: "Game_Stadium_Details",
+             let: {
+                teamID: "$TeamID",
+             },
+             pipeline: [
+                { $match: {
+                      $expr: {
+                         $or: [
+                            { $eq: [ "$TeamID1", "$$teamID" ] },
+                            { $eq: [ "$TeamID2", "$$teamID" ] }
+                         ] 
+                      }
+                   }
+                }
+             ],
+as: "Player_Game"
+}},
+{
+$project: {
+
+		   "Birth Date": 0,
+		   "Shirt Name": 0,
+		   "Club": 0,
+		   "Height": 0,
+		   "Weight":0,
+		   "Player_Game.Groups": 0,
+		   "Player_Game.TeamID1": 0,
+		   "Player_Game.TeamID2": 0,
+		   "Player_Game.Team1_Score": 0,
+		   "Player_Game.Team2_Score": 0,
+}},
+		{
+		$out: "Game_Stadium_player"
+		}
+])
+
+--------------------------------------------------------------------
+
+db.Game_Stadium_player.aggregate ( [ 
+{
+$lookup: {
+             from: "Game_Goal_Details",
+             let: {
+                teamID: "$TeamID"
+             },
+             pipeline: [
+                { $match: {
+                      $expr: {
+                         $or: [
+                            { $eq: [ "$TeamID1", "$$teamID" ] },
+                            { $eq: [ "$TeamID2", "$$teamID" ] }
+                         ] 
+                      }
+                   }
+                }
+             ],
+as: "Game_Stadium_player_Goals"
+}},
+{
+$project: {
+		   "Game_Stadium_player_Goals.Groups": 0,
+		   "Game_Stadium_player_Goals.TeamID1": 0,
+		   "Game_Stadium_player_Goals.TeamID2": 0,
+		   "Game_Stadium_player_Goals.Team1_Score": 0,
+		   "Game_Stadium_player_Goals.Team2_Score": 0
+		   }},
+{
+ $out: "Player_Data1"
+		}])
+
+
+
+
+		

@@ -1,0 +1,43 @@
+db.rosters.aggregate ( [ 
+{
+$lookup: {
+             from: "starting_lineups",
+             let: {
+                teamID: "$TeamID",
+				playerID: "$PlayerID"
+             },
+             pipeline: [
+                { $match: {
+                      $expr: {
+                         $and: [
+                            { $eq: [ "$TeamID", "$$teamID" ] },
+                            { $eq: [ "$PlayerID", "$$playerID" ] }
+                         ]
+                      }
+                   }
+                }
+             ],
+as: "Player_StartingLineups"
+}},
+
+{
+$project: {
+
+		   "Birth Date": 0,
+		   "Shirt Name": 0,
+		   "Club": 0,
+		   "Height": 0,
+		   "Weight":0,
+		   "Player_StartingLineups._id" : 0,
+}},
+
+{ 
+$out: "Player_Game_details"
+}
+])
+
+
+
+
+
+
